@@ -1,0 +1,6 @@
+# Claude Code agent memory
+.claude/agent-memory/
+
+# OS
+.DS_Store
+Thumbs.db

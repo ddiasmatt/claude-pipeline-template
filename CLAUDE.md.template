@@ -1,0 +1,49 @@
+# {{PROJECT_NAME}}
+
+{{PROJECT_DESCRIPTION}}
+
+## Stack
+
+- {{STACK_ITEMS}}
+
+## Comandos
+
+- `{{CMD_DEV}}` — servidor de desenvolvimento
+- `{{CMD_BUILD}}` — build de producao
+- `{{CMD_LINT}}` — lint
+- `{{CMD_TEST}}` — testes
+- `{{CMD_TEST_WATCH}}` — testes em watch mode
+
+## Estrutura Principal
+
+- {{FOLDER_STRUCTURE}}
+
+## Pipeline de Desenvolvimento
+
+Este projeto usa um pipeline estruturado. SEMPRE siga esta ordem:
+
+1. **Planejar** — Criar PRD em `docs/prds/` usando `/project:create-prd`
+2. **Arquitetar** — Definir plano tecnico em `docs/plans/` usando `/project:create-plan`
+3. **Fragmentar** — Criar stories em `docs/stories/` usando `/project:create-story`
+4. **Implementar** — Codar baseado na story usando `/project:implement`
+5. **Validar** — Review com `/project:review`
+6. **Commitar** — Commit com `/project:commit`
+
+NUNCA pule direto para implementacao sem ter pelo menos um plano documentado.
+
+## Padroes do Projeto
+
+- {{PROJECT_PATTERNS}}
+
+## Regras Criticas
+
+- NEVER commite na branch main diretamente — crie feature branch
+- ALWAYS escreva testes para logica de negocio
+- {{ADDITIONAL_RULES}}
+
+## Referencias (ler sob demanda)
+
+- Arquitetura do sistema — `agent_docs/architecture.md`
+- Convencoes de codigo — `agent_docs/code-conventions.md`
+- Guia de testes — `agent_docs/testing-guide.md`
+- Schema do banco — `agent_docs/database-schema.md`
