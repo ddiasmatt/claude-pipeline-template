@@ -133,10 +133,11 @@ Os arquivos sao:
 | `code-conventions.md` | Padroes de codigo, naming, estrutura de pastas, convencoes de git |
 | `database-schema.md` | Tabelas, relacionamentos, migrations, queries comuns |
 | `testing-guide.md` | Framework de testes, como rodar, mocks, exemplos |
+| `design-system.md` | Tokens de design, estrutura de componentes, guidelines visuais |
 
 ### 3.3 Adicionar skills especificas (opcional)
 
-O template vem com `testing-patterns` (universal). Para adicionar skills do seu stack:
+O template vem com `testing-patterns` e `design-system` (ambas universais). Para adicionar skills do seu stack:
 
 ```bash
 mkdir -p .claude/skills/react-patterns  # ou vue-patterns, api-patterns, etc.
@@ -442,6 +443,21 @@ O campo `description` da skill contem palavras-chave. Quando voce menciona essas
 
 **Conteudo**: principios de teste (AAA, um teste por coisa, naming), checklist pre-entrega
 
+### Skill incluida: design-system
+
+**Ativa quando voce menciona**: design system, tokens de design, cores, tipografia, espacamento, sombras, border-radius, componentes visuais, documentacao visual
+
+**Conteudo**: processo completo de elaboracao de design system em 5 fases:
+1. Auditoria de tokens existentes (CSS vars, Tailwind config, UI library)
+2. Definicao da estrutura (primitivos, semanticos, de componente)
+3. Componentes shared (SectionHeader, ColorSwatch, TokenTable)
+4. 19 secoes organizadas em Foundations, Components, Patterns e Meta
+5. Infraestrutura da pagina (rota isolada, lazy loading, responsividade)
+
+Inclui checklist pre-entrega, regras criticas e sugestao de fragmentacao em 4 stories.
+
+Referencia detalhada em `agent_docs/design-system.md`.
+
 ### Adicionando suas skills
 
 Crie um diretorio em `.claude/skills/[nome]/` com um `SKILL.md`. O campo `description` e crucial — use palavras que o usuario diria naturalmente:
@@ -492,6 +508,7 @@ Os `agent_docs/` sao a "memoria de longo prazo" do projeto. O Claude consulta so
 | `code-conventions.md` | Ao implementar codigo, fazer review |
 | `database-schema.md` | Ao criar migrations, queries, ou entender modelo de dados |
 | `testing-guide.md` | Ao escrever testes |
+| `design-system.md` | Ao criar design system, documentar tokens, definir padroes visuais |
 
 **Dica**: quanto mais detalhados e precisos os agent_docs, melhor o Claude implementa. Vale investir tempo preenchendo-os bem.
 
