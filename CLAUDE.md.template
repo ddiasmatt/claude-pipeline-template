@@ -47,3 +47,4 @@ NUNCA pule direto para implementacao sem ter pelo menos um plano documentado.
 - Convencoes de codigo — `agent_docs/code-conventions.md`
 - Guia de testes — `agent_docs/testing-guide.md`
 - Schema do banco — `agent_docs/database-schema.md`
+- Design system — `agent_docs/design-system.md`

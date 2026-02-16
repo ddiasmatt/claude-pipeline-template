@@ -9,9 +9,9 @@ Pipeline estruturado de desenvolvimento para projetos assistidos por Claude Code
   commands/       8 slash commands para o pipeline completo
   hooks/          Firewall de comandos destrutivos + lint/typecheck automatico
   settings.json   Configuracao dos hooks
-  skills/         Skills auto-ativantes (testing-patterns)
+  skills/         Skills auto-ativantes (testing-patterns, design-system)
   agents/         Reviewer e planner especializados
-agent_docs/       Templates de documentacao tecnica
+agent_docs/       Templates de documentacao tecnica (arquitetura, convencoes, testes, design system)
 docs/             Estrutura para PRDs, planos, stories, decisoes
 CLAUDE.md.template  Template de CLAUDE.md com placeholders
 ```
@@ -77,6 +77,7 @@ Cada arquivo em `agent_docs/` tem headers com `[TODO: ...]`. Preencha com inform
 - `code-conventions.md` — padroes de codigo, naming, git
 - `database-schema.md` — tabelas, relacionamentos, migrations
 - `testing-guide.md` — framework, mocks, exemplos
+- `design-system.md` — tokens, componentes, guidelines visuais
 
 ### 3. Adicionar skills especificas (opcional)
 
@@ -121,6 +122,13 @@ Apos configurar, use os seguintes slash commands no Claude Code:
 | `/project:commit` | Commit inteligente |
 | `/project:catchup` | Retoma contexto apos /clear |
 | `/project:status` | Visao geral do pipeline |
+
+## Skills incluidas
+
+| Skill | Descricao |
+|-------|-----------|
+| `testing-patterns` | Principios de teste (AAA, naming, mocks), checklist pre-entrega |
+| `design-system` | Processo completo para criar design system: auditoria de tokens, estrutura, secoes (foundations, components, patterns), guidelines, fragmentacao em stories |
 
 ## Fluxo de desenvolvimento
 
