@@ -2,11 +2,11 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "branch=$(git branch --show-current 2>/dev/null); [ \"$branch\" != \"main\" ] && [ \"$branch\" != \"master\" ] || { echo 'Nao edite na branch main/master. Crie uma feature branch: git checkout -b feat/nome' >&2; exit 2; }",
+            "command": ".claude/hooks/pre-edit-main-guard.sh",
             "timeout": 5
           }
         ]

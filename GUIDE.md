@@ -38,6 +38,19 @@ Ideia → PRD → Plano → Stories → Codigo → Review → Commit
 - **Garante qualidade consistente**: hooks automaticos impedem erros comuns (editar na main, comandos destrutivos, codigo sem lint)
 - **Fragmenta trabalho complexo**: features grandes sao divididas em stories implementaveis em uma sessao cada
 - **Cria historico de decisoes**: PRDs e planos documentam o "porque" das mudancas, nao so o "o que"
+- **Otimiza custo por complexidade**: stories simples usam modelos baratos (Haiku), complexas usam modelos capazes (Opus)
+
+### Arquitetura de Agents
+
+```
+Complexidade da Story → Selecao Automatica de Modelo
+
+  P (Pequena)  →  Haiku   →  implementer-haiku   (rapido, barato)
+  M (Media)    →  Sonnet  →  implementer-sonnet   (equilibrado)
+  G (Grande)   →  Opus    →  implementer-opus     (mais capaz)
+
+  Falha na validacao?  →  Escalada automatica: Haiku → Sonnet → Opus
+```
 
 ---
 
@@ -56,6 +69,9 @@ cp -rn /tmp/pipeline-tmp/.claude .claude/
 cp -rn /tmp/pipeline-tmp/agent_docs agent_docs/
 cp -rn /tmp/pipeline-tmp/docs docs/
 cp /tmp/pipeline-tmp/CLAUDE.md.template ./CLAUDE.md.template
+
+# Torna hooks executaveis
+chmod +x .claude/hooks/*.sh
 
 # Limpa
 rm -rf /tmp/pipeline-tmp
@@ -129,7 +145,7 @@ Os arquivos sao:
 
 | Arquivo | O que documentar |
 |---------|------------------|
-| `architecture.md` | Componentes, fluxos de dados, integrações, decisoes arquiteturais |
+| `architecture.md` | Componentes, fluxos de dados, integracoes, decisoes arquiteturais |
 | `code-conventions.md` | Padroes de codigo, naming, estrutura de pastas, convencoes de git |
 | `database-schema.md` | Tabelas, relacionamentos, migrations, queries comuns |
 | `testing-guide.md` | Framework de testes, como rodar, mocks, exemplos |
@@ -205,8 +221,9 @@ O Claude vai:
 O Claude vai:
 - Ler o PRD e o plano
 - Fragmentar em stories pequenas (cada uma completavel em ~1 sessao)
+- Atribuir complexidade P/M/G a cada story
 - Criar arquivos como `docs/stories/STORY-001-componente-filtro.md`, `STORY-002-hook-filtragem.md`, etc.
-- Cada story tem: objetivo, tarefas, criterios de aceite, contexto tecnico
+- Cada story tem: objetivo, complexidade, tarefas, criterios de aceite, contexto tecnico
 
 **Voce revisa** as stories e ajusta se necessario.
 
@@ -218,11 +235,13 @@ O Claude vai:
 
 O Claude vai:
 - Carregar a story + PRD + convencoes
+- Detectar a complexidade (ex: M) e selecionar o modelo (ex: Sonnet)
 - Apresentar o que vai fazer ANTES de escrever codigo
 - Esperar sua aprovacao
+- Delegar ao agent correto via Task tool
 - Implementar tarefa por tarefa, marcando cada uma como concluida
-- Escrever testes
-- Rodar `npm test` e `npm run lint`
+- Validar (testes + lint)
+- Se falhar: escalar automaticamente para modelo mais capaz
 - Atualizar o status da story para "Em Review"
 
 #### Passo 5 — Review
@@ -231,12 +250,12 @@ O Claude vai:
 /project:review 001
 ```
 
-O Claude vai revisar o codigo contra:
+O Claude delega ao agent `reviewer` (Opus) que vai revisar o codigo contra:
 - Padroes do `agent_docs/code-conventions.md`
 - Criterios de aceite da story
 - Checklist de qualidade, seguranca, performance
 
-Produz um relatorio com: Aprovado / Sugestoes / Bloqueios.
+Produz um relatorio com: Aprovado / Sugestoes / Bloqueios + veredicto final.
 
 #### Passo 6 — Commit
 
@@ -298,6 +317,7 @@ O Claude vai:
 
 **Output**: multiplos arquivos `docs/stories/STORY-NNN-[slug].md`, cada um com:
 - Status (Pendente / Em Progresso / Em Review / Concluida)
+- Complexidade (P / M / G) — define qual modelo sera usado
 - Objetivo
 - Contexto tecnico (arquivos relacionados, padroes a seguir)
 - Tarefas (checklist)
@@ -310,23 +330,27 @@ O Claude vai:
 
 ### `/project:implement [numero]`
 
-**O que faz**: implementa uma story especifica.
+**O que faz**: implementa uma story especifica com selecao automatica de modelo.
 
 **Input**: numero da story (ex: `001`)
 
 **Processo**:
 1. Carrega story + PRD + convencoes
-2. Apresenta plano e espera aprovacao
-3. Implementa tarefa por tarefa
-4. Escreve testes
-5. Roda testes e lint
-6. Atualiza status da story
+2. Detecta complexidade (P/M/G) da story
+3. Apresenta plano + modelo selecionado e espera aprovacao
+4. Delega ao agent correto via Task tool:
+   - P → `implementer-haiku` (Haiku)
+   - M → `implementer-sonnet` (Sonnet)
+   - G → `implementer-opus` (Opus)
+5. Valida resultado (testes + lint)
+6. Se falhar: escala automaticamente (Haiku → Sonnet → Opus)
+7. Atualiza status da story
 
 ---
 
 ### `/project:review [numero]`
 
-**O que faz**: review de codigo contra padroes e criterios.
+**O que faz**: review de codigo delegado ao agent `reviewer` (Opus).
 
 **Input**: numero da story (opcional — sem argumento faz review geral do diff)
 
@@ -337,7 +361,7 @@ O Claude vai:
 - Seguranca (inputs validados, sem dados sensiveis)
 - Performance (sem N+1, sem memory leaks)
 
-**Output**: relatorio com Aprovado / Sugestoes / Bloqueios.
+**Output**: relatorio com Aprovado / Sugestoes / Bloqueios + veredicto final.
 
 ---
 
@@ -384,17 +408,33 @@ O Claude vai:
 
 ---
 
+### `/project:structure-skill [nome]`
+
+**O que faz**: cria ou reformula uma skill/agent definition.
+
+**Input**: nome da skill ou agent (ex: `testing-patterns`, `reviewer`)
+
+**Processo**:
+1. Localiza o arquivo alvo em `.claude/`
+2. Detecta tipo (skill vs agent) e modo (criar vs reformular)
+3. Delega ao agent `skill-architect` (Opus)
+4. Apresenta relatorio de mudancas
+
+---
+
 ## 6. Protecoes automaticas (Hooks)
 
 Os hooks executam SEMPRE — nao sao sugestoes que o Claude pode ignorar. Sao garantias.
 
 ### Branch Guard
 
-**Quando**: antes de qualquer `Edit` ou `Write`
+**Quando**: antes de qualquer `Edit`, `Write` ou `NotebookEdit`
 
 **O que faz**: impede edicao de arquivos na branch `main` ou `master`. Forca criar feature branch.
 
-**Mensagem de erro**: `"Nao edite na branch main/master. Crie uma feature branch: git checkout -b feat/nome"`
+**Arquivo**: `.claude/hooks/pre-edit-main-guard.sh`
+
+**Mensagem de erro**: `"BLOQUEADO: voce esta na branch 'main'. Crie uma branch antes de editar."`
 
 ### Bash Firewall
 
@@ -407,7 +447,7 @@ Os hooks executam SEMPRE — nao sao sugestoes que o Claude pode ignorar. Sao ga
 - `git reset --hard`
 - `git push --force` ou `git push -f`
 
-**Mensagem de erro**: `"Comando potencialmente destrutivo bloqueado: [comando]"`
+**Arquivo**: `.claude/hooks/pre-bash-firewall.sh`
 
 ### Quality Check
 
@@ -424,6 +464,8 @@ Os hooks executam SEMPRE — nao sao sugestoes que o Claude pode ignorar. Sao ga
 | Python | `ruff check .` | `mypy .` |
 | Go | `golangci-lint run` | (built-in) |
 | Rust | `cargo clippy` | (built-in) |
+
+**Arquivo**: `.claude/hooks/post-edit-quality.sh`
 
 **Nao-bloqueante**: reporta erros mas nao impede a edicao. O Claude recebe o feedback e pode corrigir.
 
@@ -454,8 +496,6 @@ O campo `description` da skill contem palavras-chave. Quando voce menciona essas
 4. 19 secoes organizadas em Foundations, Components, Patterns e Meta
 5. Infraestrutura da pagina (rota isolada, lazy loading, responsividade)
 
-Inclui checklist pre-entrega, regras criticas e sugestao de fragmentacao em 4 stories.
-
 Referencia detalhada em `agent_docs/design-system.md`.
 
 ### Adicionando suas skills
@@ -476,25 +516,67 @@ description: >
 
 ## 8. Agents — especialistas sob demanda
 
-Agents sao "sub-IAs" com papel definido. Podem ser invocados pelo pipeline ou diretamente.
+Agents sao "sub-IAs" com papel e modelo definidos. Sao invocados pelo pipeline automaticamente.
 
-### Reviewer
+### Planner (Sonnet)
+
+**Papel**: arquiteto de software. Analisa requisitos e cria planos sem escrever codigo.
+
+**Invocado por**: `/project:create-plan`
+
+**Produz**: lista de arquivos, ordem de implementacao, riscos, sugestao de fragmentacao em stories.
+
+### Reviewer (Opus)
 
 **Papel**: code reviewer senior. Analisa sem modificar.
 
 **Invocado por**: `/project:review`
 
-**Verifica**: qualidade, padroes, seguranca, testes, performance.
+**Verifica**: qualidade, padroes, seguranca, testes, performance, criterios de aceite.
 
 **Output**: relatorio com veredicto (APROVADO / APROVADO COM SUGESTOES / BLOQUEADO)
 
-### Planner
+### Implementer-Haiku (Haiku)
 
-**Papel**: arquiteto de software. Analisa requisitos e cria planos.
+**Papel**: implementador de stories pequenas (P). Rapido e direto.
 
-**Invocado por**: `/project:create-plan`
+**Invocado por**: `/project:implement` quando complexidade = P
 
-**Produz**: lista de arquivos, ordem de implementacao, riscos, sugestao de fragmentacao em stories.
+**Foco**: executar tarefas sequencialmente, sem over-engineering.
+
+### Implementer-Sonnet (Sonnet)
+
+**Papel**: implementador de stories medias (M). Equilibra velocidade e raciocinio.
+
+**Invocado por**: `/project:implement` quando complexidade = M
+
+**Foco**: integracao entre componentes, tratamento de edge cases.
+
+### Implementer-Opus (Opus)
+
+**Papel**: arquiteto-implementador de stories grandes (G). Raciocinio profundo.
+
+**Invocado por**: `/project:implement` quando complexidade = G
+
+**Foco**: decisoes arquiteturais, planejamento interno antes de implementar, impacto no sistema.
+
+### Skill-Architect (Opus)
+
+**Papel**: cria e reformula skills e agent definitions.
+
+**Invocado por**: `/project:structure-skill`
+
+**Foco**: identificar lacunas em instrucoes, melhorar qualidade dos outputs, manter padrao.
+
+### Escalada automatica
+
+Se um implementer falha na validacao (testes ou lint), o pipeline escala automaticamente:
+
+```
+Haiku (falhou) → Sonnet (tenta corrigir) → Opus (ultima tentativa)
+```
+
+Se Opus tambem falhar, o pipeline para e pede orientacao ao usuario.
 
 ---
 
@@ -594,6 +676,14 @@ Se a mudanca e pequena (< 3 arquivos, < 1 hora), pode comecar direto do plano:
 /project:implement 001
 ```
 
+### "Uma skill ou agent esta produzindo outputs ruins"
+
+```
+/project:structure-skill nome-da-skill
+```
+
+O `skill-architect` (Opus) analisa o arquivo, identifica lacunas, e reescreve com instrucoes mais claras.
+
 ---
 
 ## 12. Personalizacao avancada
@@ -631,9 +721,16 @@ model: sonnet
 Instrucoes para o agente...
 ```
 
+Modelos disponiveis: `haiku` (rapido/barato), `sonnet` (equilibrado), `opus` (mais capaz).
+
 ### Modificar hooks
 
 Edite `.claude/settings.json` para adicionar/remover hooks. Edite os scripts em `.claude/hooks/` para alterar comportamento.
+
+Os hooks sao arquivos shell separados, faceis de customizar:
+- `pre-edit-main-guard.sh` — branch protection
+- `pre-bash-firewall.sh` — command firewall
+- `post-edit-quality.sh` — auto lint/typecheck
 
 ### Adicionar agent_docs extras
 
@@ -677,3 +774,11 @@ Verifique se os arquivos estao em `docs/stories/` e seguem o formato `STORY-NNN-
 ### "Quero desabilitar um hook"
 
 Remova a entrada correspondente do `.claude/settings.json`. Por exemplo, para desabilitar o quality check, remova o bloco `PostToolUse`.
+
+### "O modelo selecionado nao e o que eu queria"
+
+A selecao e baseada no campo `## Complexidade:` da story. Edite a story para mudar a complexidade antes de rodar `/project:implement`.
+
+### "A escalada automatica nao esta funcionando"
+
+Verifique se os agents `implementer-haiku.md`, `implementer-sonnet.md` e `implementer-opus.md` existem em `.claude/agents/`. O pipeline precisa dos tres para escalar.
