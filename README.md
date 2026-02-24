@@ -1,16 +1,16 @@
 # Claude Code Pipeline Template
 
-Pipeline estruturado de desenvolvimento para projetos assistidos por Claude Code. Inclui commands, hooks de protecao, skills, agents e estrutura de documentacao.
+Pipeline estruturado de desenvolvimento para projetos assistidos por Claude Code. Inclui commands, hooks de protecao, skills, agents especializados e estrutura de documentacao.
 
 ## O que inclui
 
 ```
 .claude/
-  commands/       8 slash commands para o pipeline completo
-  hooks/          Firewall de comandos destrutivos + lint/typecheck automatico
+  commands/       9 slash commands para o pipeline completo
+  hooks/          Branch guard + firewall de comandos destrutivos + lint/typecheck automatico
   settings.json   Configuracao dos hooks
   skills/         Skills auto-ativantes (testing-patterns, design-system)
-  agents/         Reviewer e planner especializados
+  agents/         6 agents especializados (planner, reviewer, 3 implementers, skill-architect)
 agent_docs/       Templates de documentacao tecnica (arquitetura, convencoes, testes, design system)
 docs/             Estrutura para PRDs, planos, stories, decisoes
 CLAUDE.md.template  Template de CLAUDE.md com placeholders
@@ -30,6 +30,9 @@ cp -rn /tmp/pipeline-tmp/agent_docs agent_docs/
 cp -rn /tmp/pipeline-tmp/docs docs/
 cp /tmp/pipeline-tmp/.gitignore .gitignore  # ou merge manual
 cp /tmp/pipeline-tmp/CLAUDE.md.template CLAUDE.md.template
+
+# Torna hooks executaveis
+chmod +x .claude/hooks/*.sh
 
 # Limpa
 rm -rf /tmp/pipeline-tmp
@@ -73,7 +76,7 @@ Edite e substitua os placeholders `{{...}}` com as informacoes do seu projeto:
 
 Cada arquivo em `agent_docs/` tem headers com `[TODO: ...]`. Preencha com informacoes reais do seu projeto:
 
-- `architecture.md` — componentes, fluxos, integrações
+- `architecture.md` — componentes, fluxos, integracoes
 - `code-conventions.md` — padroes de codigo, naming, git
 - `database-schema.md` — tabelas, relacionamentos, migrations
 - `testing-guide.md` — framework, mocks, exemplos
@@ -117,18 +120,42 @@ Apos configurar, use os seguintes slash commands no Claude Code:
 | `/project:create-prd [feature]` | Cria PRD em `docs/prds/` |
 | `/project:create-plan [feature]` | Cria plano tecnico em `docs/plans/` |
 | `/project:create-story [feature]` | Cria stories em `docs/stories/` |
-| `/project:implement [numero]` | Implementa uma story |
-| `/project:review [numero]` | Review de codigo |
+| `/project:implement [numero]` | Implementa uma story (auto-seleciona modelo por complexidade) |
+| `/project:review [numero]` | Review de codigo (delega ao agent reviewer Opus) |
 | `/project:commit` | Commit inteligente |
 | `/project:catchup` | Retoma contexto apos /clear |
 | `/project:status` | Visao geral do pipeline |
+| `/project:structure-skill [nome]` | Cria ou reformula skills/agents |
+
+## Agents incluidos
+
+| Agent | Modelo | Papel |
+|-------|--------|-------|
+| `planner` | Sonnet | Analisa requisitos, cria planos de implementacao |
+| `reviewer` | Opus | Code review com relatorio detalhado e veredicto |
+| `implementer-haiku` | Haiku | Implementa stories P (pequenas) — rapido e direto |
+| `implementer-sonnet` | Sonnet | Implementa stories M (medias) — integracao entre componentes |
+| `implementer-opus` | Opus | Implementa stories G (grandes) — decisoes arquiteturais |
+| `skill-architect` | Opus | Cria e reformula skills e agent definitions |
+
+### Selecao automatica de modelo
+
+O comando `/project:implement` detecta a complexidade da story e delega ao agent correto:
+
+```
+Complexidade P → Haiku   (rapido, barato)
+Complexidade M → Sonnet  (equilibrado)
+Complexidade G → Opus    (mais capaz)
+```
+
+Se o agent falhar na validacao, escala automaticamente: `Haiku → Sonnet → Opus`.
 
 ## Skills incluidas
 
 | Skill | Descricao |
 |-------|-----------|
 | `testing-patterns` | Principios de teste (AAA, naming, mocks), checklist pre-entrega |
-| `design-system` | Processo completo para criar design system: auditoria de tokens, estrutura, secoes (foundations, components, patterns), guidelines, fragmentacao em stories |
+| `design-system` | Processo completo para criar design system: auditoria de tokens, estrutura, secoes, guidelines |
 
 ## Fluxo de desenvolvimento
 
@@ -139,20 +166,21 @@ Nova feature:
   /project:create-plan filtro-mensagens
   → revisar e aprovar plano
   /project:create-story filtro-mensagens
-  → revisar stories
+  → revisar stories (cada uma com complexidade P/M/G)
   /project:implement 001
-  → Claude implementa com plano + testes
+  → Claude seleciona modelo pela complexidade e implementa
   /project:review 001
-  → review contra criterios
+  → review contra criterios (Opus)
   /project:commit
   → commit com verificacoes
 
 Retomar trabalho: /project:catchup
 Visao geral:     /project:status
+Criar/melhorar skills: /project:structure-skill [nome]
 ```
 
 ## Protecoes automaticas
 
-- **Branch guard**: bloqueia edicoes na main/master
+- **Branch guard**: bloqueia edicoes na main/master (arquivo separado, facil de customizar)
 - **Bash firewall**: bloqueia `rm -rf`, `git push --force`, etc.
 - **Quality check**: roda lint + typecheck apos cada edicao (detecta stack automaticamente: Node.js, Python, Go, Rust)

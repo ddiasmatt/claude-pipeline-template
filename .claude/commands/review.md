@@ -1,59 +1,43 @@
 ---
-description: Review de codigo contra padroes e criterios de aceite
-allowed-tools: Read, Glob, Grep
+description: Review de codigo contra padroes e criterios de aceite (Opus)
+allowed-tools: Read, Glob, Grep, Bash, Task
 argument-hint: [numero-da-story ou vazio para review geral]
 ---
 
 # Code Review
 
-## Se numero de story fornecido:
-Leia a story `docs/stories/STORY-$ARGUMENTS*.md` e valide contra criterios.
+## Contexto atual
 
-## Mudancas atuais:
+Numero da story (se fornecido): $ARGUMENTS
+
+Mudancas atuais:
 !`git diff --cached --stat 2>/dev/null || git diff --stat`
 
-## Checklist de Review
+Diff completo:
+!`git diff --cached 2>/dev/null || git diff`
 
-Analise o codigo alterado verificando:
+## Instrucoes
 
-### 1. Conformidade com Padroes
-- Segue convencoes de `agent_docs/code-conventions.md`?
-- Naming consistente?
-- Estrutura de arquivos correta?
+Use o **Task tool** para delegar o review ao agente `reviewer` (opus).
 
-### 2. Qualidade
-- Sem codigo duplicado?
-- Funcoes com responsabilidade unica?
-- Sem TODO/FIXME/HACK temporarios?
-- Sem console.log de debug?
-- Sem credenciais ou dados sensiveis?
+No prompt do Task, inclua:
+1. O numero da story: `$ARGUMENTS` (se vazio, informar "review geral sem story")
+2. O diff completo acima
+3. A lista de arquivos alterados
+4. Instrucao para carregar a story `docs/stories/STORY-$ARGUMENTS*.md` (se numero fornecido)
 
-### 3. Testes
-- Logica de negocio testada?
-- Casos de borda cobertos?
-- Testes passando?
+Exemplo de prompt para o Task:
+```
+Faca o review do codigo alterado para a STORY-$ARGUMENTS.
 
-### 4. Seguranca
-- Inputs validados?
-- Sem SQL injection / XSS?
-- Dados sensiveis protegidos?
-- RLS policies adequadas?
+Arquivos alterados: [lista do git diff --stat]
 
-### 5. Performance
-- Sem queries N+1?
-- Sem loops desnecessarios?
-- Sem memory leaks (cleanup de channels/subscriptions)?
+Diff completo:
+[conteudo do git diff]
 
-### 6. Padroes VukTasks
-- Hooks seguem o padrao hook-first?
-- Realtime subscriptions tem cleanup?
-- Notificacoes nao auto-notificam?
-- TickTick sync e best-effort?
+Carregue a story em docs/stories/STORY-$ARGUMENTS*.md para verificar os criterios de aceite.
+Siga seu processo completo de review e produza o relatorio com veredicto final.
+```
 
-## Output
-Produza relatorio:
-- **Aprovado**: O que esta bom
-- **Sugestoes**: Melhorias opcionais
-- **Bloqueios**: DEVE ser corrigido antes de merge
-
-Se ha bloqueios, ofereca para corrigi-los.
+Apos o agente retornar, apresente o relatorio ao usuario.
+Se houver bloqueios, pergunte se deve corrigir.
